@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manga Downloader</title>
+    <!-- Bootstrap CSS link -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>Manga Downloader</h1>
+        <!-- Form to search for manga -->
+        <form method="POST">
+            <div class="form-group">
+                <label for="source">Select Source:</label>
+                <select class="form-control" name="source" id="source" required>
+                    {% if sources %}
+                        {% for source in sources %}
+                        <option value="{{ source.source_id }}">{{ source.source_name }}</option>
+                        {% endfor %}
+                    {% else %}
+                        <option value="">No Source Found</option>
+                    {% endif %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="manga_link">Enter Manga Link:</label>
+                <input type="text" class="form-control" name="manga_link" id="manga_link" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+        <br>
+        <br>
+
+        {% if manga_data %}
+        <!-- Manga cards section -->
+        <h2>Manga List</h2>
+        <div class="row">
+        {% for manga in manga_data %}
+        <div class="col-md-2 mb-2"> <!-- Adjusted class to col-md-3 -->
+            <div class="card h-100"> <!-- Added class h-100 for cards to have same height -->
+                <img src="{{ manga.image_url }}" class="card-img-top" alt="{{ manga.title }}">
+                <div class="card-body">
+                    <a href="{{ url_for('manga_details', manga_id=manga.manga_id) }}" class="card-link">
+                        <h5 class="card-title text-center">{{ manga.title }}</h5>
+                    </a>
+                    <!-- Add any additional information you want to display here -->
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        </div>
+        {% endif %}
+        <!-- Bootstrap JS link -->
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    </div>
+</body>
+</html>

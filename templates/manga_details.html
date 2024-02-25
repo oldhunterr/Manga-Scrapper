@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ manga.title }}</title>
+    <!-- Bootstrap CSS link -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container py-4">
+        <div class="row">
+            <div class="col-md-6 offset-md-3">
+                <h1 class="text-center">{{ manga.title }}</h1>
+                <img src="{{ manga.image_url }}" alt="{{ manga.title }}" class="img-fluid mx-auto d-block mb-4">
+                <p class="lead">{{ manga.description }}</p>
+                
+                <h2 class="mt-5">الفصول</h2>
+                    <button type="submit" class="btn btn-primary mt-3" onclick="return bulkDownloadChapters()">تحميل الفصول المحددة</button>
+                    <br>
+                    <br>
+                    <ul class="list-group">
+                        {% for chapter in manga.chapters %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                {% if not chapter.downloaded %}
+                                <input type="checkbox" name="selected_chapters[]" value="{{ chapter.chapter_id }}" class="form-check-input">
+                                {% else %}
+                                <input type="checkbox" class="form-check-input" disabled checked>
+                                {% endif %}
+                                <a href="{{ chapter.chapter_url }}" class="text-decoration-none">{{ chapter.chapter_number }}</a>
+                            </div>
+                            {% if not chapter.downloaded %}
+                            <form action="{{ url_for('download_chapter') }}" method="POST">
+                                <input type="hidden" name="manga_id" value="{{ manga.manga_id }}">
+                                <input type="hidden" name="chapter_url" value="{{ chapter.chapter_url }}">
+                                <input type="hidden" name="source_id" value="{{ manga.source_id }}">
+                                <input type="hidden" name="chapter_number" value="{{ chapter.chapter_number }}">
+                                <input type="hidden" name="chapter_id" value="{{ chapter.chapter_id }}">
+                                <button type="submit" class="btn btn-primary">تحميل الفصل</button>
+                            </form>
+                            {% else %}
+                            <span class="badge bg-success">تم التحميل</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <button type="button" class="btn btn-secondary mt-3" onclick="fetchChapters()">إعادة جلب الفصول</button>
+                    <input type="hidden" name="s_id" id="source_id" value="{{ manga.source_id }}">
+                    <input type="hidden" name="m_id" id="manga_id" value="{{ manga.manga_id }}">
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS link -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+    <script>
+    function fetchChapters() {
+        
+        // Get the manga ID from the hidden input field
+        const mangaId = document.getElementById('manga_id').value;
+        console.log(mangaId);
+        // Make an AJAX request to fetch chapters again
+        fetch("/fetch_chapters", {
+            method: "POST", // Change the method to POST
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ manga_id: mangaId }), // Send manga ID in the request body
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Handle the response data (updated chapters)
+            console.log('Chapters fetched again:', data);
+            // Here you can update the HTML content with the new chapters
+            // For simplicity, let's reload the page after fetching chapters
+            location.reload();
+        })
+        .catch(error => {
+            console.error('Error fetching chapters:', error);
+        });
+    }
+
+    function bulkDownloadChapters() {
+    // Get the manga ID and selected chapter IDs
+    const mangaId = document.getElementById('manga_id').value;
+    const sourceId = document.getElementById('source_id').value;
+    const selectedChapters = Array.from(document.querySelectorAll('input[name="selected_chapters[]"]:checked')).map(chapter => chapter.value);
+    if(!selectedChapters.length > 0){
+        alert("Please Select At least one Chapter");
+        return;
+    }
+    // Make an AJAX request to the server to bulk download chapters
+    fetch("/bulk_download_chapters", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            manga_id: mangaId,
+            selected_chapters: selectedChapters,
+            source_id: sourceId
+        }),
+    })
+    .then(response => {
+        // Check if response status is 200 (OK)
+        if (response.ok) {
+            // Reload the page if the response is successful
+            location.reload();
+        } else {
+            // Handle other response statuses (e.g., display an error message)
+            console.error('Error during bulk download:', response.status);
+        }
+    })
+    .catch(error => {
+        console.error('Error during bulk download:', error);
+    });
+    }
+    </script>
+</body>
+</html>
